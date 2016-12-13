@@ -1,0 +1,5 @@
+{
+    'HC' : 1240 * 10, # 1240 eV*nm -> ev*angstrom,
+	'PIXEL_SIZE' : 114e4, # length per pixel
+    'COFFSET' : 5.68e9 # 0.568 m -> angstrom
+}

@@ -16,7 +16,56 @@ def pol2cart(theta, rho):
     y = rho * np.sin(theta)
     return x, y
 
-def get_q_vector(x, y, E, WDshift):
+def get_coordinates(peak_list):
+    """
+    read peak list return X, Y coordinates
+    Column | Value
+         1 | x coordinate (pixel)
+         2 | y coordiante (pixel)
+         3 | Intensity
+         4 | SNR
+         5 | Laser Energy (eV)
+         6 | working distance shift (mm)
+    """
+    x, y = peak_list[:, 0], peak_list[:, 1]
+    return x, y
+
+def get_polar_coordinates(peak_list):
+    """
+    read peak list return theta, rho in polar coordinates
+    """
+    x, y = peak_list[:, 0], peak_list[:, 1]
+    theta, rho = cart2pol(x, y)
+    return theta, rho
+
+def get_intensity(peak_list):
+    """
+    Read peak list return energy.
+    Column | Value
+         3 | Intensity
+    """
+    intensity = peak_list[:,2]
+    return intensity
+
+def get_energy(peak_list):
+    """
+    Read peak list return energy.
+    Column | Value
+         5 | Laser Energy (eV)
+    """
+    energy = peak_list[:,4]
+    return energy
+
+def get_WDshift(peak_list):
+    """
+    To read peak list return Energy
+    Column | Value
+         6 | working distance shift (mm)
+    """
+    WDshift = peak_list[:,5]
+    return WDshift
+
+def get_q_vector(x, y, energy, WDshift):
     """
     Get q vector in reciprocal space
     WD = working distance
@@ -33,16 +82,16 @@ def get_q_vector(x, y, E, WDshift):
     rho = rho * 110e4 # pixel * angstrom/pixel
     WD = COFFSET + WDshift * 1e7 # WDshift = mm -> angstrom
 
-    q = 2 * E / HC * np.sin(0.5 * np.arctan(rho/WD)) # reciprocal vector
+    q = 2 * energy / HC * np.sin(0.5 * np.arctan(rho/WD)) # reciprocal vector
 
     qx = q * np.cos(phi)
     qy = q * np.sin(phi)
 
     return q, qx, qy
 
-def getDeltaQ(DeltaE, rho, E, WDshift):
+def getDeltaQ(DeltaE, rho, energy, WDshift):
     """
-    Get DeltaQ distance
+    Get Delta Q distance
     """
     HC = 1240 * 10 # 1240 eV*nm -> ev*angstrom
     COFFSET = 5.68e9 # 0.568 m -> angstrom
@@ -50,9 +99,9 @@ def getDeltaQ(DeltaE, rho, E, WDshift):
     rho = rho * 110e4 # pixel * angstrom/pixel
     WD = COFFSET + WDshift * 1e7 # WDshift = mm -> angstrom
 
-    lbda = HC / E
-    Delta_lambda = np.abs(lbda - HC / (E-DeltaE))
-    q = 2 * E / HC * np.sin(0.5 * np.arctan(rho/WD))
+    lbda = HC / energy
+    Delta_lambda = np.abs(lbda - HC/(energy-DeltaE))
+    q = 2 * energy / HC * np.sin(0.5 * np.arctan(rho/WD))
     theta = np.arcsin(0.5 * q * lbda)
 
     DeltaQ = q * WD * Delta_lambda / (np.cos(2*theta)**2 * np.cos(theta))
@@ -60,9 +109,9 @@ def getDeltaQ(DeltaE, rho, E, WDshift):
 
     return DeltaQ
 
-def getDeltaE(DeltaQ, rho, E, WDshift):
+def getDeltaE(DeltaQ, rho, energy, WDshift):
     """
-    Get DeltaE
+    Get Delta energy
     """
     HC = 1240 * 10 # 1240 eV*nm -> ev*angstrom
     COFFSET = 5.68e9 # 0.568 m -> angstrom
@@ -70,12 +119,12 @@ def getDeltaE(DeltaQ, rho, E, WDshift):
     rho = rho * 110e4 # pixel * angstrom/pixel
     WD = COFFSET + WDshift * 1e7 # WDshift = mm -> angstrom
     DeltaQ = DeltaQ * 110e4 # pixel * angstrom/pixel
-    lbda = HC / E # lambda (angstrom)
+    lbda = HC / energy # lambda (angstrom)
 
-    q = 2 * E / HC * np.sin(0.5*np.arctan(rho/WD))
+    q = 2 * energy / HC * np.sin(0.5*np.arctan(rho/WD))
     theta = np.arcsin(0.5 * q * lbda)
     Delta_lambda = DeltaQ * (np.cos(2*theta)**2 * np.cos(theta)) / q / WD
 
-    DeltaE = E - HC / (lbda+Delta_lambda)
+    DeltaE = energy - HC / (lbda + Delta_lambda)
 
     return DeltaE
