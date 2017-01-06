@@ -4,6 +4,8 @@ def cart2pol(x, y):
     """
     Transform Cartesian to polar coordinates
     """
+    x = np.asarray(x)
+    y = np.asarray(y)
     theta = np.arctan2(y, x)
     rho = np.sqrt(x**2 + y**2)
     return theta, rho
@@ -12,6 +14,8 @@ def pol2cart(theta, rho):
     """
     Transform polar to Cartesian coordinates.
     """
+    theta = np.asarray(theta)
+    rho = np.asarray(rho)
     x = rho * np.cos(theta)
     y = rho * np.sin(theta)
     return x, y
@@ -75,11 +79,11 @@ def get_q_vector(x, y, energy, WDshift):
     Return:
         q:
     """
-    HC = 1240 * 10 # 1240 eV*nm -> ev*angstrom
+    HC = float(1240 * 10) # 1240 eV*nm -> ev*angstrom
     COFFSET = 5.68e9 # 0.568 m -> angstrom
 
     phi, rho = cart2pol(x, y)
-    rho = rho * 110e4 # pixel * angstrom/pixel
+    rho = rho * float(110e4) # pixel * angstrom/pixel
     WD = COFFSET + WDshift * 1e7 # WDshift = mm -> angstrom
 
     q = 2 * energy / HC * np.sin(0.5 * np.arctan(rho/WD)) # reciprocal vector
@@ -89,14 +93,23 @@ def get_q_vector(x, y, energy, WDshift):
 
     return q, qx, qy
 
-def getDeltaQ(DeltaE, rho, energy, WDshift):
+def get_DeltaQ(DeltaE, rho, energy, WDshift):
     """
     Get Delta Q distance
-    """
-    HC = 1240 * 10 # 1240 eV*nm -> ev*angstrom
-    COFFSET = 5.68e9 # 0.568 m -> angstrom
 
-    rho = rho * 110e4 # pixel * angstrom/pixel
+    input: ( all the input value should be the information of shorter wavelength )
+        DeltaE:
+        rho:
+        energy:
+        WDshift:
+
+    return:
+        DeltaQ:
+    """
+    HC = float(1240 * 10) # 1240 eV*nm -> ev*angstrom
+    COFFSET = float(5.68e9) # 0.568 m -> angstrom
+
+    rho = rho * float(110e4) # pixel * angstrom/pixel
     WD = COFFSET + WDshift * 1e7 # WDshift = mm -> angstrom
 
     lbda = HC / energy
@@ -105,18 +118,18 @@ def getDeltaQ(DeltaE, rho, energy, WDshift):
     theta = np.arcsin(0.5 * q * lbda)
 
     DeltaQ = q * WD * Delta_lambda / (np.cos(2*theta)**2 * np.cos(theta))
-    DeltaQ = DeltaQ / 110e4 # angstrom -> pixel
+    DeltaQ = DeltaQ / float(110e4) # angstrom -> pixel
 
     return DeltaQ
 
-def getDeltaE(DeltaQ, rho, energy, WDshift):
+def get_DeltaE(DeltaQ, rho, energy, WDshift):
     """
     Get Delta energy
     """
-    HC = 1240 * 10 # 1240 eV*nm -> ev*angstrom
+    HC = float(1240 * 10) # 1240 eV*nm -> ev*angstrom
     COFFSET = 5.68e9 # 0.568 m -> angstrom
 
-    rho = rho * 110e4 # pixel * angstrom/pixel
+    rho = rho * float(110e4) # pixel * angstrom/pixel
     WD = COFFSET + WDshift * 1e7 # WDshift = mm -> angstrom
     DeltaQ = DeltaQ * 110e4 # pixel * angstrom/pixel
     lbda = HC / energy # lambda (angstrom)
