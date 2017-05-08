@@ -1,4 +1,5 @@
 import os
+import glob
 from functools import reduce
 
 import numpy as np
@@ -7,7 +8,20 @@ from matplotlib import pyplot as plt
 
 import utils
 
-class PeakList():
+
+class PeakList(object):
+
+    plt.rcParams['mathtext.fontset'] = 'cm'
+    plt.rcParams['mathtext.rm'] = 'serif'
+    plt.rcParams['xtick.direction'] = 'in'
+    plt.rcParams['ytick.direction'] = 'in'
+    PLOT_PAR = {'family': 'sans-serif',
+                'weight': 'normal',
+                'size': 14}
+    plt.rc('font', **PLOT_PAR)
+    plt.rc('text', **{'latex.unicode': True})
+
+    PLOT_NUM = 0
 
     def __init__(self, ID, peaklist_folder, isfilter=False):
         """
@@ -16,14 +30,14 @@ class PeakList():
         self._ID = ID
         self._FOLDER = peaklist_folder
 
-        fname_list = [peaklist_folder+name for name in os.listdir(peaklist_folder) if name.find('txt')>0]
+        fname_list = glob.glob(os.path.join(peaklist_folder, '*.txt'))
         self.hit_list = [np.loadtxt(name) for name in fname_list]
         vstack = lambda x, y: np.vstack((x, y))
         self.all_hit = reduce(vstack, self.hit_list)
         self._HIT_LIST_LENGTH = len(self.hit_list)
         self._PEAK_NUMBER = len(self.all_hit)
         self.short_wavelength_points, self.long_wavelength_points = self.get_satellite()
-    
+
     def __str__(self):
         """Print information of Class"""
         print('Class PeakList \n')
@@ -44,9 +58,8 @@ class PeakList():
             else:
                 short_wavelength_list.append(short_wavelength)
                 long_wavelength_list.append(long_wavelength)
-        
         vstack = lambda x, y: np.vstack((x, y))
-        short_wavelength_points= reduce(vstack, short_wavelength_list)
+        short_wavelength_points = reduce(vstack, short_wavelength_list)
         long_wavelength_points = reduce(vstack, long_wavelength_list)
 
         return short_wavelength_points, long_wavelength_points
@@ -71,7 +84,9 @@ class PeakList():
         xy = np.vstack((x, y)).T
         xy_dist_squareform = squareform(pdist(xy))
         xy_dist_tril = np.tril(xy_dist_squareform)
-        idx1, idx2 = np.where(np.logical_and(xy_dist_tril>0, xy_dist_tril<40))
+        idx1, idx2 = np.where(
+            np.logical_and(xy_dist_tril > 0, xy_dist_tril < 40)
+            )
 
         point1 = peak_list[idx1]
         point2 = peak_list[idx2]
@@ -94,10 +109,10 @@ class PeakList():
             for i in range(idx1.size):
                 if rho1[i] - rho2[i] > 0:
                     idx1[i], idx2[i] = idx2[i], idx1[i]
-            
+
             short_wavelength_points = peak_list[idx1]
             long_wavelength_points = peak_list[idx2]
-            
+
             _, rho = utils.get_polar_coordinates(short_wavelength_points)
             energy = utils.get_energy(short_wavelength_points)
             WDshift = utils.get_WDshift(short_wavelength_points)
@@ -107,8 +122,114 @@ class PeakList():
             lowerbound = 0.8 * DeltaQ
 
             pair_dist = np.abs(rho1 - rho2)
-            accept_idx = np.where(np.logical_and(pair_dist > lowerbound, pair_dist < upperbound))
+            accept_idx = np.where(
+                np.logical_and(pair_dist > lowerbound, pair_dist < upperbound)
+                )
             short_wavelength_points = short_wavelength_points[accept_idx]
             long_wavelength_points = long_wavelength_points[accept_idx]
 
             return short_wavelength_points, long_wavelength_points
+
+    # ----------------------------------------------------------------------- #
+    #                         INSTANCE METHODS                                #
+    # ----------------------------------------------------------------------- #
+
+    # ------------------------------ PLOT ------------------------------------#
+    def plot_pixelmap(self):
+        all_x, all_y = utils.get_coordinates(self.all_hit)
+
+        plt.figure(self.PLOT_NUM)
+
+        plt.plot(all_x, all_y, '.k', markersize=1)
+        plt.xlabel('$x$ (pixel)')
+        plt.ylabel('$y$ (pixel)')
+        plt.title('Pixel Map')
+        plt.axis([-900, 900, -900, 900])
+        plt.tight_layout()
+
+        self.PLOT_NUM += 1
+
+    def plot_ewald_construction(self):
+        """
+        ewald sphere construction ?
+        """
+        all_qx, all_qy = utils.get_q_vector_from_peaklist(self.all_hit)
+
+        plt.figure(self.PLOT_NUM)
+
+        plt.plot(all_qx, all_qy, '.k', markersize=1)
+        plt.xlabel('$q_x (\AA^{-1})$')
+        plt.ylabel('$q_y (\AA^{-1})$')
+        plt.title('Ewal')
+        plt.tight_layout()
+
+        self.PLOT_NUM += 1
+
+    def plot_q_Intensity(self):
+
+        all_q = utils.get_q_vector_from_peaklist(self.all_hit, component=False)
+        all_intensity = utils.get_intensity(self.all_hit)
+
+        plt.figure(self.PLOT_NUM)
+
+        plt.plot(all_q, np.log(all_intensity), '.')
+        plt.xlabel('$q$ ($\AA^{-1}$)')
+        plt.ylabel('Intensity (log scale)')
+        plt.tight_layout()
+
+        self.PLOT_NUM += 1
+
+    def plot_satellite(self):
+
+        short_x, short_y = utils.get_coordinates(self.short_wavelength_points)
+        long_x, long_y = utils.get_coordinates(self.long_wavelength_points)
+
+        plt.figure(self.PLOT_NUM)
+
+        plt.plot(short_x, short_y, '.b', markersize=1)
+        plt.plot(long_x, long_y, '.r', markersize=1)
+        plt.xlabel('$x$ (pixel)')
+        plt.ylabel('$y$ (pixel)')
+        plt.title('Two-color Diffraction Pattern')
+        plt.tight_layout()
+
+        self.PLOT_NUM += 1
+
+    def plot_intensity_ratio(self):
+
+        short_intensity = utils.get_intensity(self.short_wavelength_points)
+        long_intensity = utils.get_intensity(self.long_wavelength_points)
+        # use shorter wavelength or longer wavelength ???
+        satellite_q = utils.get_q_vector_from_peaklist(
+            self.short_wavelength_points, component=False)
+        I_ratio = short_intensity / long_intensity
+
+        sorted_idx = np.argsort(satellite_q)
+        sorted_q = satellite_q[sorted_idx]
+        sorted_ratio = I_ratio[sorted_idx]
+
+        plt.figure(self.PLOT_NUM)
+
+        plt.plot(sorted_q, np.log(sorted_ratio), '-o')
+        plt.xlabel('$q$ ($\AA^{-1}$)')
+        plt.ylabel('ratio (log scale)')
+        plt.title('Intensity Ratio of Two Split Spots')
+        plt.tight_layout()
+        
+        self.PLOT_NUM += 1
+
+    def plot_ratio_hist(self):
+
+        short_intensity = utils.get_intensity(self.short_wavelength_points)
+        long_intensity = utils.get_intensity(self.long_wavelength_points)
+        I_ratio = short_intensity / long_intensity
+
+        plt.figure(self.PLOT_NUM)
+
+        plt.hist(np.log(I_ratio), bins=np.arange(-6.5, 7.5), edgecolor='white')
+        plt.xlabel('ratio (log scale)')
+        plt.ylabel('count')
+        plt.title('Histogram of Intensity Ratio')
+        plt.tight_layout()
+
+        self.PLOT_NUM += 1
