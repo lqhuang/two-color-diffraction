@@ -69,12 +69,48 @@ def get_WDshift(peak_list):
     WDshift = peak_list[:,5]
     return WDshift
 
-def get_q_vector(x, y, energy, WDshift):
+
+def get_q_vector_from_peaklist(peak_list, component=True):
     """
     Get q vector in reciprocal space
     WD = working distance
 
     Args:
+    --------
+    component: bool.
+        return components of q vector or only return q vector.
+
+    Return:
+    q:
+    """
+    HC = float(1240 * 10) # 1240 eV*nm -> ev*angstrom
+    COFFSET = 5.68e9 # 0.568 m -> angstrom
+
+    x, y = peak_list[:, 0], peak_list[:, 1]
+    energy = peak_list[:,4]
+    WDshift = peak_list[:,5]
+    phi, rho = cart2pol(x, y)
+    rho = rho * float(110e4) # pixel * angstrom/pixel
+    WD = COFFSET + WDshift * 1e7 # WDshift = mm -> angstrom
+
+    q = 2 * energy / HC * np.sin(0.5 * np.arctan(rho/WD)) # reciprocal vector
+    qx = q * np.cos(phi)
+    qy = q * np.sin(phi)
+
+    if component:
+        return qx, qy
+    else:
+        return q
+
+
+def get_q_vector(x, y, energy, WDshift, component=True):
+    """
+    Get q vector in reciprocal space
+    WD = working distance
+
+    Args:
+        component: bool.
+        return components of q vector or only return q vector.
 
     Return:
         q:
@@ -87,11 +123,13 @@ def get_q_vector(x, y, energy, WDshift):
     WD = COFFSET + WDshift * 1e7 # WDshift = mm -> angstrom
 
     q = 2 * energy / HC * np.sin(0.5 * np.arctan(rho/WD)) # reciprocal vector
-
     qx = q * np.cos(phi)
     qy = q * np.sin(phi)
 
-    return q, qx, qy
+    if component:
+        return qx, qy
+    else:
+        return q
 
 def get_DeltaQ(DeltaE, rho, energy, WDshift):
     """
