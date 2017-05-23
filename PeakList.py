@@ -36,7 +36,7 @@ class PeakList(object):
         self.all_hit = reduce(vstack, self.hit_list)
         self._HIT_LIST_LENGTH = len(self.hit_list)
         self._PEAK_NUMBER = len(self.all_hit)
-        self.short_wavelength_points, self.long_wavelength_points = self.get_satellite()
+        self.pump_points, self.probe_points = self.get_satellite()
 
     def __str__(self):
         """Print information of Class"""
@@ -59,10 +59,10 @@ class PeakList(object):
                 short_wavelength_list.append(short_wavelength)
                 long_wavelength_list.append(long_wavelength)
         vstack = lambda x, y: np.vstack((x, y))
-        short_wavelength_points = reduce(vstack, short_wavelength_list)
-        long_wavelength_points = reduce(vstack, long_wavelength_list)
+        pump_points = reduce(vstack, short_wavelength_list)
+        probe_points = reduce(vstack, long_wavelength_list)
 
-        return short_wavelength_points, long_wavelength_points
+        return pump_points, probe_points
 
     @staticmethod
     def find_satellite(peak_list):
@@ -78,7 +78,11 @@ class PeakList(object):
                 5 | Laser Energy (eV)
                 6 | working distance shift (mm)
         return:
-            (shorter wavelength, longer wavelength) contanis x, y, intensity, SNR, Laser Energy, working distance shift.
+            (shorter wavelength, longer wavelength): contanis x, y, intensity, SNR, Laser Energy, working distance shift.
+            
+        comments:
+            pump light: shorter wavelength, higher energy
+            probe light: longer wavelength
         """
         x, y = utils.get_coordinates(peak_list)
         xy = np.vstack((x, y)).T
@@ -110,14 +114,15 @@ class PeakList(object):
                 if rho1[i] - rho2[i] > 0:
                     idx1[i], idx2[i] = idx2[i], idx1[i]
 
-            short_wavelength_points = peak_list[idx1]
-            long_wavelength_points = peak_list[idx2]
+            pump_points = peak_list[idx1]
+            probe_points = peak_list[idx2]
 
-            _, rho = utils.get_polar_coordinates(short_wavelength_points)
-            energy = utils.get_energy(short_wavelength_points)
-            WDshift = utils.get_WDshift(short_wavelength_points)
+            _, rho = utils.get_polar_coordinates(pump_points)
+            energy = utils.get_energy(pump_points)
+            WDshift = utils.get_WDshift(pump_points)
             DeltaE = 80
             DeltaQ = utils.get_DeltaQ(DeltaE, rho, energy, WDshift)
+            print('DeltaQ:', DeltaQ)
             upperbound = 1.2 * DeltaQ
             lowerbound = 0.8 * DeltaQ
 
@@ -125,10 +130,10 @@ class PeakList(object):
             accept_idx = np.where(
                 np.logical_and(pair_dist > lowerbound, pair_dist < upperbound)
                 )
-            short_wavelength_points = short_wavelength_points[accept_idx]
-            long_wavelength_points = long_wavelength_points[accept_idx]
+            pump_points = pump_points[accept_idx]
+            probe_points = probe_points[accept_idx]
 
-            return short_wavelength_points, long_wavelength_points
+            return pump_points, probe_points
 
     # ----------------------------------------------------------------------- #
     #                         INSTANCE METHODS                                #
@@ -181,8 +186,8 @@ class PeakList(object):
 
     def plot_satellite(self):
 
-        short_x, short_y = utils.get_coordinates(self.short_wavelength_points)
-        long_x, long_y = utils.get_coordinates(self.long_wavelength_points)
+        short_x, short_y = utils.get_coordinates(self.pump_points)
+        long_x, long_y = utils.get_coordinates(self.probe_points)
 
         plt.figure(self.PLOT_NUM)
 
@@ -197,11 +202,11 @@ class PeakList(object):
 
     def plot_intensity_ratio(self):
 
-        short_intensity = utils.get_intensity(self.short_wavelength_points)
-        long_intensity = utils.get_intensity(self.long_wavelength_points)
+        short_intensity = utils.get_intensity(self.pump_points)
+        long_intensity = utils.get_intensity(self.probe_points)
         # use shorter wavelength or longer wavelength ???
         satellite_q = utils.get_q_vector_from_peaklist(
-            self.short_wavelength_points, component=False)
+            self.pump_points, component=False)
         I_ratio = short_intensity / long_intensity
 
         sorted_idx = np.argsort(satellite_q)
@@ -220,8 +225,8 @@ class PeakList(object):
 
     def plot_ratio_hist(self):
 
-        short_intensity = utils.get_intensity(self.short_wavelength_points)
-        long_intensity = utils.get_intensity(self.long_wavelength_points)
+        short_intensity = utils.get_intensity(self.pump_points)
+        long_intensity = utils.get_intensity(self.probe_points)
         I_ratio = short_intensity / long_intensity
 
         plt.figure(self.PLOT_NUM)
