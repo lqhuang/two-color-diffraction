@@ -84,7 +84,7 @@ def get_q_vector_from_peaklist(peak_list, component=True):
     q:
     """
     HC = float(1240 * 10) # 1240 eV*nm -> ev*angstrom
-    COFFSET = 5.68e10 # 0.568 m -> angstrom
+    COFFSET = 0.568e10 # 0.568 m -> angstrom
 
     x, y = peak_list[:, 0], peak_list[:, 1]
     energy = peak_list[:,4]
@@ -116,7 +116,7 @@ def get_q_vector(x, y, energy, WDshift, component=True):
         q:
     """
     HC = float(1240 * 10) # 1240 eV*nm -> ev*angstrom
-    COFFSET = 5.68e10 # 0.568 m -> angstrom
+    COFFSET = 0.568e10 # 0.568 m -> angstrom
 
     phi, rho = cart2pol(x, y)
     rho = rho * float(110e4) # pixel * angstrom/pixel
@@ -145,7 +145,7 @@ def get_DeltaQ(DeltaE, rho, energy, WDshift):
         DeltaQ:
     """
     HC = float(1240 * 10) # 1240 eV*nm -> ev*angstrom
-    COFFSET = float(5.68e10) # 0.568 m -> angstrom
+    COFFSET = float(0.568e10) # 0.568 m -> angstrom
 
     rho = rho * float(110e4) # pixel * angstrom/pixel
     WD = COFFSET + WDshift * 1e7 # WDshift = mm -> angstrom
@@ -165,7 +165,7 @@ def get_DeltaE(DeltaQ, rho, energy, WDshift):
     Get Delta energy
     """
     HC = float(1240 * 10) # 1240 eV*nm -> ev*angstrom
-    COFFSET = 5.68e10 # 0.568 m -> angstrom
+    COFFSET = 0.568e10 # 0.568 m -> angstrom
 
     rho = rho * float(110e4) # pixel * angstrom/pixel
     WD = COFFSET + WDshift * 1e7 # WDshift = mm -> angstrom
