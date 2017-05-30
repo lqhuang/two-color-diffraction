@@ -10,7 +10,7 @@ import utils
 
 
 if __name__ == '__main__':
-    run_folder = '/Users/lqhuang/Documents/CSRC/Data/Two-color/peak_lists/run78/'
+    run_folder = '/Users/lqhuang/Documents/CSRC/Data/Two-color/new_peak_lists/run78/'
     run_ID = 78
     exp = PeakList(run_ID, run_folder, isfilter=False)
 
@@ -21,4 +21,4 @@ if __name__ == '__main__':
     exp.plot_intensity_ratio()
     exp.plot_ratio_hist()
     
-    plt.show()
+    # plt.show()
