@@ -69,9 +69,29 @@ class Geometry(object):
         Rearrange raw image to assembled pattern according to 
         the geometry setup.
         """
-        new_img = np.zeros((self.nx, self.ny))
-        new_img[self.x.ravel(), self.y.ravel()] = image.ravel()
+        # new_img = np.zeros((self.nx, self.ny))
+        # new_img[self.x.ravel(), self.y.ravel()] = image.ravel()
+        new_img = np.zeros((self.ny, self.nx))
+        new_img[self.y.ravel(), self.x.ravel()] = image.ravel()
         return new_img
+    
+    def generate_intensity_scale_mask(self, working_distance):
+        """
+        working distance: meter
+        """
+        slope = 1.113
+        intercept = 22.234 * self.pixel_size
+        Zn_thkns = 50
+        rho = np.sqrt(self.geom_x ** 2 + self.geom_y ** 2)
+        unfiltered_part = self.geom_y < slope * self.geom_x + intercept
+
+        scatter_ang = np.arctan(rho / working_distance)  # 2 * theta
+        scaling_factor = np.exp(Zn_thkns / 41.73 / np.cos(scatter_ang))
+
+        unfilterd = np.logical_and(unfiltered_part, scaling_factor)
+        scaling_factor[unfilterd] = 1
+        scale_mask = self.rearrange(scaling_factor)
+        return scale_mask
 
     def map(self, pos):
         """
