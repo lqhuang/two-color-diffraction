@@ -1,5 +1,6 @@
 import numpy as np
 
+
 def cart2pol(x, y):
     """
     Transform Cartesian to polar coordinates
@@ -10,6 +11,7 @@ def cart2pol(x, y):
     rho = np.sqrt(x**2 + y**2)
     return theta, rho
 
+
 def pol2cart(theta, rho):
     """
     Transform polar to Cartesian coordinates.
@@ -19,6 +21,7 @@ def pol2cart(theta, rho):
     x = rho * np.cos(theta)
     y = rho * np.sin(theta)
     return x, y
+
 
 def get_coordinates(peak_list):
     """
@@ -34,6 +37,7 @@ def get_coordinates(peak_list):
     x, y = peak_list[:, 0], peak_list[:, 1]
     return x, y
 
+
 def get_polar_coordinates(peak_list):
     """
     read peak list return theta, rho in polar coordinates
@@ -41,6 +45,7 @@ def get_polar_coordinates(peak_list):
     x, y = peak_list[:, 0], peak_list[:, 1]
     theta, rho = cart2pol(x, y)
     return theta, rho
+
 
 def get_intensity(peak_list):
     """
@@ -51,6 +56,7 @@ def get_intensity(peak_list):
     intensity = peak_list[:,2]
     return intensity
 
+
 def get_energy(peak_list):
     """
     Read peak list return energy.
@@ -59,6 +65,7 @@ def get_energy(peak_list):
     """
     energy = peak_list[:,4]
     return energy
+
 
 def get_WDshift(peak_list):
     """
@@ -131,6 +138,7 @@ def get_q_vector(x, y, energy, WDshift, component=True):
     else:
         return q
 
+
 def get_DeltaQ(DeltaE, rho, energy, WDshift):
     """
     Get Delta Q distance
@@ -160,6 +168,7 @@ def get_DeltaQ(DeltaE, rho, energy, WDshift):
 
     return DeltaQ
 
+
 def get_DeltaE(DeltaQ, rho, energy, WDshift):
     """
     Get Delta energy
@@ -179,3 +188,12 @@ def get_DeltaE(DeltaQ, rho, energy, WDshift):
     DeltaE = energy - HC / (lbda + Delta_lambda)
 
     return DeltaE
+
+
+def get_relationship_for_radius_DeltaQ():
+    rho = np.arange(0, 1000)
+    DeltaE = 80
+    energy = 9600
+    WDshift = -4.75e2
+    DeltaQ = get_DeltaQ(DeltaE, rho, energy, WDshift)
+    return DeltaQ
