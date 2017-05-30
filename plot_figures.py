@@ -21,4 +21,4 @@ if __name__ == '__main__':
     exp.plot_intensity_ratio()
     exp.plot_ratio_hist()
     
-    plt.show()
+    # plt.show()
